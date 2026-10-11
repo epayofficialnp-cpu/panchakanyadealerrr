@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3b6cf6">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon.svg">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>JKT Billing</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg1:#dfe7ff;--bg2:#f4f0ff;--card:rgba(255,255,255,.78);--tx:#141a33;--mut:#5b6486;--ac:#3b6cf6;--ac2:#7c4dff;--ok:#0e9f6e;--bad:#e02f4a;--warn:#d98a00;--bd:rgba(255,255,255,.9);--sh:rgba(40,60,140,.3);--inp:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg1:#0a0f24;--bg2:#1a1140;--card:rgba(26,33,66,.8);--tx:#eaf0ff;--mut:#9aa6d0;--ac:#6d93ff;--ac2:#a17bff;--ok:#34d399;--bad:#ff6b81;--warn:#fbbf24;--bd:rgba(255,255,255,.12);--sh:rgba(0,0,0,.65);--inp:#101636}}
+:root[data-theme="dark"]{--bg1:#0a0f24;--bg2:#1a1140;--card:rgba(26,33,66,.8);--tx:#eaf0ff;--mut:#9aa6d0;--ac:#6d93ff;--ac2:#a17bff;--ok:#34d399;--bad:#ff6b81;--warn:#fbbf24;--bd:rgba(255,255,255,.12);--sh:rgba(0,0,0,.65);--inp:#101636}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:var(--tx);background-color:var(--bg1);background-image:linear-gradient(135deg,var(--bg1),var(--bg2));background-attachment:fixed;min-height:100vh}
+.w{max-width:1000px;margin:0 auto;padding:14px 14px 100px}
+.hd{display:flex;justify-content:space-between;align-items:center;padding:6px 4px}
+.logo{font-size:44px;font-weight:900;letter-spacing:4px;color:var(--ac);text-shadow:1px 1px 0 #2a4fc4,2px 2px 0 #2446ad,3px 3px 0 #1d3a94,4px 4px 0 #17307c,5px 10px 14px var(--sh)}
+.hd small{color:var(--mut);font-weight:600}
+.pill{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;background:var(--card);border:1px solid var(--bd);font-size:11px;font-weight:700;color:var(--ok);box-shadow:0 6px 12px -6px var(--sh)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 var(--ok)}100%{box-shadow:0 0 0 9px transparent}}
+.nav{display:flex;gap:10px;margin:14px 0}
+.nav .btn{flex:1;padding:12px}
+.btn{position:relative;overflow:hidden;border:0;border-radius:12px;padding:10px 14px;font-family:inherit;font-weight:700;font-size:13px;color:#fff;background:linear-gradient(180deg,var(--ac),var(--ac2));box-shadow:0 5px 0 #2a2f8f,0 10px 18px var(--sh);cursor:pointer;transition:transform .12s,box-shadow .12s,filter .2s}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #2a2f8f,0 3px 6px var(--sh)}
+.btn.g{background:linear-gradient(180deg,#8f98bd,#616a91);box-shadow:0 5px 0 #3d4467,0 10px 18px var(--sh)}
+.btn.g:active{box-shadow:0 1px 0 #3d4467,0 3px 6px var(--sh)}
+.btn.g.on{background:linear-gradient(180deg,var(--ac),var(--ac2));box-shadow:0 5px 0 #2a2f8f,0 10px 18px var(--sh)}
+.btn.r{background:linear-gradient(180deg,#ff7a8d,#e02f4a);box-shadow:0 5px 0 #a11a30,0 10px 18px var(--sh)}
+.btn.r:active{box-shadow:0 1px 0 #a11a30,0 3px 6px var(--sh)}
+.btn.sm{padding:7px 10px;font-size:12px;box-shadow:0 3px 0 #2a2f8f,0 6px 10px var(--sh)}
+.btn.sm.r{box-shadow:0 3px 0 #a11a30,0 6px 10px var(--sh)}
+.btn:disabled{opacity:.5;pointer-events:none}
+.rp{position:absolute;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.55);transform:translate(-50%,-50%) scale(0);animation:rp .6s ease-out;pointer-events:none}
+@keyframes rp{to{transform:translate(-50%,-50%) scale(26);opacity:0}}
+.tab{display:none}
+.tab.on{display:block;animation:tin .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes tin{from{opacity:0;transform:perspective(900px) rotateX(-8deg) translateY(16px)}}
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(8px)}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:16px;margin-bottom:16px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 10px 0 -5px rgba(0,0,0,.06),0 26px 40px -16px var(--sh)}
+h2{font-size:17px;margin-bottom:12px}
+label{display:block;font-size:12px;font-weight:700;color:var(--mut);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+input{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--inp);color:var(--tx);font-family:inherit;font-size:16px;font-weight:600;box-shadow:inset 0 2px 5px rgba(0,0,0,.15);outline:0;transition:box-shadow .2s}
+input:focus{box-shadow:inset 0 2px 5px rgba(0,0,0,.15),0 0 0 3px var(--ac)}
+input[type=radio]{width:auto}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.span{grid-column:1/-1}
+.sts{display:flex;gap:10px;flex-wrap:wrap}
+.sts label{display:flex;align-items:center;gap:6px;padding:9px 14px;margin:0;border-radius:99px;background:var(--inp);cursor:pointer;text-transform:none;font-size:14px;color:var(--tx);box-shadow:0 4px 8px -4px var(--sh);transition:transform .15s}
+.sts label:active{transform:scale(.94)}
+.row{display:grid;grid-template-columns:1fr 72px 100px 92px auto;gap:8px;align-items:center;padding:8px;margin-bottom:10px;border-radius:14px;background:var(--card);border:1px solid var(--bd);box-shadow:0 10px 18px -10px var(--sh);animation:pop .35s;transition:opacity .2s,transform .2s}
+.row.out{opacity:0;transform:translateX(40px) scale(.9)}
+.nm{position:relative}
+.ac{position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--inp);border-radius:12px;box-shadow:0 16px 30px -8px var(--sh);z-index:30;display:none;max-height:220px;overflow-y:auto}
+.ai{display:flex;justify-content:space-between;gap:8px;padding:10px 12px;cursor:pointer;font-size:14px;font-weight:600}
+.ai:hover,.ai:active{background:var(--ac);color:#fff}
+.t{text-align:right;font-size:15px}
+.ra{display:flex;gap:6px}
+.sum{display:flex;flex-direction:column;align-items:flex-end;gap:8px;margin-top:14px}
+.sr{display:flex;justify-content:space-between;align-items:center;width:min(100%,320px);font-weight:600}
+.sr input{width:110px;text-align:right}
+.gt{padding:12px 14px;border-radius:14px;color:#fff;font-size:20px;font-weight:800;background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 6px 0 #2a2f8f,0 16px 24px -8px var(--sh)}
+.bump{animation:bump .35s}
+@keyframes bump{40%{transform:scale(1.12)}}
+.acts{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+.st,.bc{transition:transform .15s ease-out;transform-style:preserve-3d}
+.st{padding:16px;border-radius:18px;text-align:center;background:var(--card);border:1px solid var(--bd);box-shadow:0 8px 0 -3px rgba(0,0,0,.08),0 22px 30px -14px var(--sh)}
+.st span{display:block;font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;margin-bottom:6px}
+.st h3{font-size:22px}
+.bc{padding:14px;border-radius:16px;margin-bottom:12px;background:var(--card);border:1px solid var(--bd);box-shadow:0 10px 0 -5px rgba(0,0,0,.06),0 18px 26px -14px var(--sh);animation:pop .35s}
+.bt{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.bt b{font-size:16px;word-break:break-word}
+.bd{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--mut);font-weight:600;margin-bottom:10px}
+.bd em{font-style:normal;color:var(--tx)}
+.bg{padding:3px 10px;border-radius:99px;font-size:11px;font-weight:800;color:#fff}
+.Paid{background:var(--ok)}.Unpaid{background:var(--bad)}.Partial{background:var(--warn)}
+.empty{text-align:center;color:var(--mut);padding:22px;font-weight:600}
+.hb{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.hb input{width:auto;flex:1;min-width:150px}
+.pf{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;align-items:center}
+.mo{position:fixed;inset:0;background:rgba(5,8,25,.7);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.mo.show{display:flex}
+.md{width:100%;max-width:380px;animation:pop .3s}
+#toasts{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:200;pointer-events:none}
+.toast{padding:11px 18px;border-radius:14px;color:#fff;font-weight:700;font-size:14px;background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 14px 28px -8px var(--sh);animation:pop .3s}
+@media(max-width:700px){
+.nav{position:fixed;left:0;right:0;bottom:0;margin:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:var(--card);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--bd);z-index:50}
+.g2,.pf{grid-template-columns:1fr}
+.stats{grid-template-columns:1fr}
+.row{grid-template-columns:1fr 1fr 1fr}
+.row .nm,.row .ra{grid-column:1/-1}
+.ra{justify-content:flex-end}
+.logo{font-size:36px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="toasts"></div>
+<div class="w">
+  <header class="hd">
+    <div><div class="logo">JKT</div><small>Estimate Billing &amp; Inventory</small></div>
+    <div style="display:flex;gap:8px;align-items:center"><span class="pill"><i></i><span id="live">LIVE</span></span><button class="btn sm g" id="lo">Logout</button></div>
+  </header>
+  <nav class="nav">
+    <button class="btn g on" data-t="bill">🧾 Bill</button>
+    <button class="btn g" data-t="col">📊 Collection</button>
+    <button class="btn g" data-t="inv">📦 Price List</button>
+  </nav>
+
+  <!-- BILL -->
+  <section id="bill" class="tab on">
+    <div class="card">
+      <input type="hidden" id="eid" value="-1">
+      <div class="g2">
+        <div><label>Customer Name</label><input id="cn" placeholder="Enter customer name"></div>
+        <div><label>Date</label><input type="date" id="date"></div>
+        <div class="span"><label>Payment Status</label>
+          <div class="sts">
+            <label><input type="radio" name="st" value="Unpaid" checked> Unpaid</label>
+            <label><input type="radio" name="st" value="Paid"> Paid</label>
+            <label><input type="radio" name="st" value="Partial"> Partial</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Items</h2>
+      <div id="items"></div>
+      <button class="btn" id="add">＋ Add Item</button>
+      <div class="sum">
+        <div class="sr"><span>Sub Total</span><b id="sub">Rs. 0.00</b></div>
+        <div class="sr"><span>Discount (%)</span><input type="number" id="disc" value="0" min="0" max="100" step="0.1" inputmode="decimal"></div>
+        <div class="sr"><span>Discount Amount</span><b id="dam">- Rs. 0.00</b></div>
+        <div class="sr gt"><span>Grand Total</span><span id="gt">Rs. 0.00</span></div>
+        <div class="sr"><span>Amount Paid</span><input type="number" id="paid" value="0" min="0" step="0.01" inputmode="decimal"></div>
+        <div class="sr"><span>Balance Due</span><b id="bal">Rs. 0.00</b></div>
+      </div>
+      <div class="acts">
+        <button class="btn" id="save">💾 Save Record</button>
+        <button class="btn g" id="pdf">📄 PDF</button>
+        <button class="btn g" id="new">✨ New Bill</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="hb"><h2 style="margin:0">Saved Bills</h2><input id="q" placeholder="Search customer..."><button class="btn sm" id="pdfAll">📄 All PDF</button></div>
+      <div id="logs"></div>
+    </div>
+  </section>
+
+  <!-- COLLECTION -->
+  <section id="col" class="tab">
+    <div class="card">
+      <div class="hb"><h2 style="margin:0">Daily Collection</h2><input type="date" id="fd" style="max-width:190px"><button class="btn sm" id="pdfDay">📄 Day PDF</button></div>
+    </div>
+    <div class="stats">
+      <div class="st tilt"><span>Total Bills Amount</span><h3 id="s1">Rs. 0.00</h3></div>
+      <div class="st tilt"><span>Paid Collected</span><h3 id="s2" style="color:var(--ok)">Rs. 0.00</h3></div>
+      <div class="st tilt"><span>Unpaid Balance</span><h3 id="s3" style="color:var(--bad)">Rs. 0.00</h3></div>
+    </div>
+    <div class="card"><h2>Bills Breakdown</h2><div id="cl"></div></div>
+  </section>
+
+  <!-- INVENTORY -->
+  <section id="inv" class="tab">
+    <div class="card">
+      <div class="hb"><h2 style="margin:0">Price List Database</h2><span><span class="bg Unpaid" id="lk">UNLOCKED</span> <button class="btn sm g" id="lkb">🔒 Lock</button></span></div>
+      <input type="hidden" id="pi" value="-1">
+      <div class="pf">
+        <input id="pn" placeholder="Item name">
+        <input id="pw" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Wholesale Rs">
+        <input id="pr" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Retail Rs">
+        <div style="display:flex;gap:8px"><button class="btn" id="ps">Save</button><button class="btn g" id="pc" style="display:none">Cancel</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <input id="psr" placeholder="Search products (min 3 letters)..." style="margin-bottom:14px">
+      <div id="pl"></div>
+    </div>
+  </section>
+</div>
+
+<div class="mo show" id="lg" style="background:linear-gradient(135deg,var(--bg1),var(--bg2))"><div class="card md" style="text-align:center"><div class="logo" style="font-size:40px;margin-bottom:4px">JKT</div><small style="color:var(--mut);font-weight:600">Sign in to continue</small>
+<input id="li" placeholder="User ID" autocomplete="username" autocapitalize="off" style="margin:16px 0 8px"><input id="lp" type="password" placeholder="Password" autocomplete="current-password"><div id="le" style="color:var(--bad);font-weight:700;min-height:22px;margin:8px 0"></div><button class="btn" id="lgo" style="width:100%">Login</button></div></div>
+<div class="mo" id="mo"><div class="card md">
+  <div style="display:flex;gap:8px;margin-bottom:14px"><button class="btn sm g" data-m="a">Lock / Unlock</button><button class="btn sm g" data-m="b">Change Password</button></div>
+  <div id="ma"><h2>Security Lock</h2><input type="password" id="p1" placeholder="Password (default 5256)"></div>
+  <div id="mb" style="display:none"><h2>Change Password</h2><input type="password" id="p2" placeholder="Previous password" style="margin-bottom:8px"><input type="password" id="p3" placeholder="New password" style="margin-bottom:8px"><input type="password" id="p4" placeholder="Confirm new password"></div>
+  <div style="display:flex;justify-content:space-between;margin-top:14px"><button class="btn g" id="mx">Cancel</button><button class="btn" id="mok">Submit</button></div>
+</div></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fm=n=>'Rs. '+(+n||0).toFixed(2);
+const ld=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const rawPin=()=>{try{return localStorage.getItem('system_pin')||'5256'}catch(e){return '5256'}};
+let P=[],L=[],locked=false,T={s:0,da:0,g:0},mode='a';
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=m;$('#toasts').appendChild(t);setTimeout(()=>t.remove(),2400)};
+const sync=()=>{$('#live').textContent='LIVE '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})};
+const set=(s,v)=>{const e=$(s);if(e.textContent!==v){e.textContent=v;e.classList.remove('bump');void e.offsetWidth;e.classList.add('bump')}};
+const sure=(b,fn)=>{if(b.dataset.arm){fn();return}const o=b.textContent;b.dataset.arm=1;b.textContent='Sure?';setTimeout(()=>{delete b.dataset.arm;b.textContent=o},2500)};
+const fail=e=>{if(e.code!==401){toast('Server error: '+e.message);load().catch(()=>{})}};
+const putB=b=>api('POST','bill',b).then(sync).catch(fail);
+const delB=id=>api('DELETE','bill/'+id).then(sync).catch(fail);
+const putP=p=>api('POST','product',p).then(sync).catch(fail);
+const delP=id=>api('DELETE','product/'+id).then(sync).catch(fail);
+
+/* ---------- tabs ---------- */
+$$('.nav .btn').forEach(b=>b.onclick=()=>{$$('.tab').forEach(t=>t.classList.remove('on'));$$('.nav .btn').forEach(x=>x.classList.remove('on'));$('#'+b.dataset.t).classList.add('on');b.classList.add('on');renderAll();scrollTo({top:0,behavior:'smooth'})});
+
+/* ---------- bill rows ---------- */
+function addRow(d={},focus){
+  const r=document.createElement('div');r.className='row';
+  r.innerHTML='<div class="nm"><input class="it" placeholder="Item name (3+ letters)" autocomplete="off"><div class="ac"></div></div><input class="q" type="number" min="0" inputmode="decimal"><input class="r" type="number" min="0" step="0.01" inputmode="decimal"><b class="t">0.00</b><div class="ra"><button type="button" class="btn sm" data-a="db">＋DB</button><button type="button" class="btn sm r" data-a="rm">✕</button></div>';
+  r.querySelector('.it').value=d.description||'';r.querySelector('.q').value=d.qty??1;r.querySelector('.r').value=d.rate??0;
+  $('#items').appendChild(r);calc();if(focus)r.querySelector('.it').focus();
+}
+function auto(i){
+  const q=i.value.trim().toLowerCase(),c=i.nextElementSibling;c.innerHTML='';
+  const m=q.length<3?[]:P.filter(p=>p.name.toLowerCase().includes(q)).slice(0,8);
+  if(!m.length){c.style.display='none';return}
+  m.forEach(p=>{const d=document.createElement('div');d.className='ai';d.innerHTML='<span></span><b></b>';d.children[0].textContent=p.name;d.children[1].textContent=fm(p.retail);
+    d.onclick=()=>{i.value=p.name;i.closest('.row').querySelector('.r').value=p.retail;c.style.display='none';calc()};c.appendChild(d)});
+  c.style.display='block';
+}
+$('#items').addEventListener('input',e=>{if(e.target.classList.contains('it'))auto(e.target);calc()});
+$('#items').addEventListener('focusin',e=>{if(e.target.classList.contains('it'))auto(e.target)});
+$('#items').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList.contains('r')){e.preventDefault();addRow({},true)}});
+$('#items').addEventListener('click',e=>{
+  const b=e.target.closest('[data-a]');if(!b)return;const r=b.closest('.row');
+  if(b.dataset.a==='rm'){if($$('.row').length>1){r.classList.add('out');setTimeout(()=>{r.remove();calc()},220)}}
+  else{
+    if(locked)return toast('Price list is locked');
+    const n=r.querySelector('.it').value.trim(),rt=+r.querySelector('.r').value||0;
+    if(!n)return toast('Enter an item name');
+    if(P.some(p=>p.name.toLowerCase()===n.toLowerCase()))return toast('Item already in price list');
+    const np={id:uid(),name:n,wholesale:rt,retail:rt};P.push(np);putP(np);renderP();toast('Saved to price list ✓');
+  }
+});
+document.addEventListener('click',e=>{if(!e.target.classList.contains('it'))$$('.ac').forEach(a=>a.style.display='none')});
+$('#add').onclick=()=>addRow({},true);
+
+/* ---------- live totals ---------- */
+function calc(){
+  let s=0;
+  $$('.row').forEach(r=>{const t=(+r.querySelector('.q').value||0)*(+r.querySelector('.r').value||0);r.querySelector('.t').textContent=t.toFixed(2);s+=t});
+  const da=s*(+$('#disc').value||0)/100,g=s-da;T={s,da,g};
+  const st=$('input[name=st]:checked').value;
+  if(st==='Paid')$('#paid').value=g.toFixed(2);else if(st==='Unpaid')$('#paid').value=0;
+  bal();set('#sub',fm(s));set('#dam','- '+fm(da));set('#gt',fm(g));
+}
+function bal(){set('#bal',fm(Math.max(0,T.g-(+$('#paid').value||0))))}
+$('#disc').oninput=calc;$('#paid').oninput=bal;
+$$('input[name=st]').forEach(r=>r.onchange=calc);
+
+function cur(){
+  const items=$$('.row').map(r=>({description:r.querySelector('.it').value.trim(),qty:r.querySelector('.q').value,rate:r.querySelector('.r').value})).filter(i=>i.description);
+  const paid=+$('#paid').value||0,eid=+$('#eid').value;
+  return{id:eid!==-1?eid:Date.now(),date:$('#date').value||'N/A',name:$('#cn').value.trim()||'N/A',status:$('input[name=st]:checked').value,items,discountPercent:$('#disc').value||0,grandTotal:fm(T.g),numericTotal:T.g,paidAmount:paid,unpaidBalance:Math.max(0,T.g-paid)};
+}
+$('#save').onclick=()=>{
+  const b=cur();if(!b.items.length)return toast('Add at least one item');
+  const i=L.findIndex(x=>x.id===b.id);i>-1?L[i]=b:L.push(b);putB(b);toast('Bill saved ✓');reset();renderAll();
+};
+function reset(){
+  $('#eid').value=-1;$('#cn').value='';$('#date').value=today();$('#disc').value=0;$('#paid').value=0;
+  $('input[name=st][value=Unpaid]').checked=true;$('#items').innerHTML='';addRow();$('#save').textContent='💾 Save Record';
+}
+$('#new').onclick=reset;
+
+/* ---------- saved bills ---------- */
+function renderLogs(){
+  const q=$('#q').value.trim().toLowerCase(),list=L.filter(b=>!q||b.name.toLowerCase().includes(q)).slice().reverse();
+  $('#logs').innerHTML=list.length?list.map(b=>`<div class="bc tilt"><div class="bt"><b>${esc(b.name)}</b><span class="bg ${esc(b.status)}">${esc(b.status)}</span></div>
+  <div class="bd"><span>📅 <em>${esc(b.date)}</em></span><span>Total <em>${esc(b.grandTotal)}</em></span><span>Paid <em>${fm(b.paidAmount)}</em></span><span>Due <em>${fm(b.unpaidBalance)}</em></span><span>${b.items.length} item(s)</span></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-id="${b.id}" data-x="e">Edit</button><button class="btn sm g" data-id="${b.id}" data-x="p">PDF</button><button class="btn sm r" data-id="${b.id}" data-x="d">Delete</button></div></div>`).join(''):'<div class="empty">No saved records yet.</div>';
+}
+$('#logs').addEventListener('click',e=>{
+  const b=e.target.closest('[data-x]');if(!b)return;const id=+b.dataset.id,rec=L.find(x=>x.id===id);if(!rec)return;
+  if(b.dataset.x==='e'){
+    $('#eid').value=id;$('#cn').value=rec.name!=='N/A'?rec.name:'';$('#date').value=rec.date;$('#disc').value=rec.discountPercent||0;
+    const r=$(`input[name=st][value=${rec.status}]`);if(r)r.checked=true;
+    $('#items').innerHTML='';(rec.items.length?rec.items:[{}]).forEach(i=>addRow(i));
+    $('#paid').value=rec.paidAmount||0;calc();$('#paid').value=rec.paidAmount||0;bal();
+    $('#save').textContent='💾 Update Record';scrollTo({top:0,behavior:'smooth'});
+  }else if(b.dataset.x==='p')pdfBills([rec],'JKT_'+rec.name+'_'+rec.date+'.pdf');
+  else sure(b,()=>{L=L.filter(x=>x.id!==id);delB(id);renderAll();toast('Deleted')});
+});
+$('#q').oninput=renderLogs;
+
+/* ---------- collection ---------- */
+function tween(sel,to){
+  const e=$(sel),from=+e.dataset.v||0;e.dataset.v=to;const t0=performance.now();
+  (function f(t){const k=Math.min(1,(t-t0)/600),v=from+(to-from)*(1-Math.pow(1-k,3));e.textContent=fm(v);if(k<1)requestAnimationFrame(f)})(t0);
+}
+const dayList=()=>{const d=$('#fd').value;return L.filter(b=>!d||b.date===d)};
+function renderCol(){
+  const l=dayList();
+  tween('#s1',l.reduce((a,b)=>a+(b.numericTotal||0),0));tween('#s2',l.reduce((a,b)=>a+(b.paidAmount||0),0));tween('#s3',l.reduce((a,b)=>a+(b.unpaidBalance||0),0));
+  $('#cl').innerHTML=l.length?l.map(b=>`<div class="bc tilt"><div class="bt"><b>${esc(b.name)}</b><span class="bg ${esc(b.status)}">${esc(b.status)}</span></div><div class="bd"><span>📅 <em>${esc(b.date)}</em></span><span>Total <em>${esc(b.grandTotal)}</em></span><span>Paid <em>${fm(b.paidAmount)}</em></span><span>Due <em>${fm(b.unpaidBalance)}</em></span></div></div>`).join(''):'<div class="empty">No saved bills for this date.</div>';
+}
+$('#fd').onchange=renderCol;
+
+/* ---------- price list ---------- */
+function lockUI(){const l=$('#lk');l.textContent=locked?'LOCKED':'UNLOCKED';l.className='bg '+(locked?'Paid':'Unpaid');$('#lkb').textContent=locked?'🔓 Unlock':'🔒 Lock'}
+function renderP(){
+  const q=$('#psr').value.trim().toLowerCase(),f=q.length>=3?q:'';
+  const l=P.map((p,i)=>({p,i})).filter(o=>o.p.name.toLowerCase().includes(f));
+  $('#pl').innerHTML=l.length?l.map((o,n)=>`<div class="bc tilt"><div class="bt"><b>${n+1}. ${esc(o.p.name)}</b></div><div class="bd"><span>Wholesale <em>${fm(o.p.wholesale)}</em></span><span>Retail <em>${fm(o.p.retail)}</em></span></div><div style="display:flex;gap:8px"><button class="btn sm" data-i="${o.i}" data-y="e" ${locked?'disabled':''}>Edit</button><button class="btn sm r" data-i="${o.i}" data-y="d" ${locked?'disabled':''}>Delete</button></div></div>`).join(''):'<div class="empty">No products found.</div>';
+}
+$('#psr').oninput=renderP;
+$('#ps').onclick=()=>{
+  if(locked)return toast('Locked!');
+  const name=$('#pn').value.trim(),w=parseFloat($('#pw').value),r=parseFloat($('#pr').value),i=+$('#pi').value;
+  if(!name||isNaN(w)||isNaN(r))return toast('Fill name, wholesale and retail');
+  const np={id:i===-1?uid():P[i].id,name,wholesale:w,retail:r};i===-1?P.push(np):P[i]=np;putP(np);pReset();renderP();toast('Product saved ✓');
+};
+function pReset(){['#pn','#pw','#pr'].forEach(s=>$(s).value='');$('#pi').value=-1;$('#ps').textContent='Save';$('#pc').style.display='none'}
+$('#pc').onclick=pReset;
+$('#pl').addEventListener('click',e=>{
+  const b=e.target.closest('[data-y]');if(!b||locked)return;const i=+b.dataset.i;
+  if(b.dataset.y==='e'){const p=P[i];$('#pn').value=p.name;$('#pw').value=p.wholesale;$('#pr').value=p.retail;$('#pi').value=i;$('#ps').textContent='Update';$('#pc').style.display='';scrollTo({top:0,behavior:'smooth'})}
+  else sure(b,()=>{const [dp]=P.splice(i,1);delP(dp.id);renderP()});
+});
+
+/* ---------- PIN modal ---------- */
+const mSw=m=>{mode=m;$('#ma').style.display=m==='a'?'block':'none';$('#mb').style.display=m==='b'?'block':'none'};
+$$('[data-m]').forEach(b=>b.onclick=()=>mSw(b.dataset.m));
+$('#lkb').onclick=()=>{$('#mo').classList.add('show');mSw('a')};
+$('#mx').onclick=()=>$('#mo').classList.remove('show');
+$('#mok').onclick=async()=>{
+  try{
+    if(mode==='a'){const r=await api('POST','lock',{pin:$('#p1').value});locked=r.locked;lockUI();renderP();$('#mo').classList.remove('show');$('#p1').value='';toast(locked?'Locked 🔒':'Unlocked 🔓')}
+    else{const o=$('#p2').value,n=$('#p3').value,c=$('#p4').value;if(!n||n!==c)return toast('Validation failed');await api('POST','pin',{old:o,new:n});$('#mo').classList.remove('show');['#p2','#p3','#p4'].forEach(s=>$(s).value='');toast('Password updated ✓')}
+  }catch(e){if(e.code!==401)toast(e.message)}
+};
+
+/* ---------- PDF ---------- */
+function draw(d,b,first){
+  if(!first)d.addPage();
+  const W=210,sub=b.items.reduce((a,i)=>a+(+i.qty||0)*(+i.rate||0),0),da=sub*(+b.discountPercent||0)/100;
+  d.setFillColor(28,45,120);d.rect(0,0,W,32,'F');d.setTextColor(255);d.setFont('helvetica','bold');d.setFontSize(24);d.text('JKT',14,16);
+  d.setFontSize(10);d.text('ESTIMATE BILL',14,25);d.text('Date: '+b.date,W-14,16,{align:'right'});d.text('Status: '+b.status,W-14,25,{align:'right'});
+  d.setTextColor(20);d.setFontSize(13);d.text('Customer: '+b.name,14,44);
+  let y=54;
+  const hd=()=>{d.setFont('helvetica','bold');d.setFillColor(230,235,250);d.rect(14,y-6,182,9,'F');d.setFontSize(10);d.text('#',16,y);d.text('ITEM',26,y);d.text('QTY',132,y,{align:'right'});d.text('RATE',160,y,{align:'right'});d.text('TOTAL',194,y,{align:'right'});y+=9;d.setFont('helvetica','normal')};
+  hd();
+  b.items.forEach((it,i)=>{
+    const ln=d.splitTextToSize(String(it.description),95),q=+it.qty||0,r=+it.rate||0;
+    if(y+ln.length*5>275){d.addPage();y=20;hd()}
+    d.setFontSize(10);d.text(String(i+1),16,y);d.text(ln,26,y);d.text(String(q),132,y,{align:'right'});d.text(r.toFixed(2),160,y,{align:'right'});d.text((q*r).toFixed(2),194,y,{align:'right'});
+    y+=ln.length*5+3;d.setDrawColor(210);d.line(14,y-4,196,y-4);
+  });
+  if(y>240){d.addPage();y=20}
+  y+=6;d.setFont('helvetica','bold');d.setFontSize(11);
+  [['Sub Total',fm(sub)],['Discount ('+(b.discountPercent||0)+'%)','- '+fm(da)],['Grand Total',b.grandTotal],['Amount Paid',fm(b.paidAmount)],['Balance Due',fm(b.unpaidBalance)]].forEach(([k,v])=>{d.text(k,130,y);d.text(v,196,y,{align:'right'});y+=7});
+}
+async function pdfBills(list,name){
+  if(!list.length)return toast('No bills to export');
+  if(!window.jspdf)return toast('PDF library did not load — check internet');
+  const d=new window.jspdf.jsPDF({unit:'mm',format:'a4'});
+  list.forEach((b,i)=>draw(d,b,!i));
+  const fn=name.replace(/[^\w.-]+/g,'_');
+  try{const dl=window.claude&&await window.claude.use('downloads');if(dl){await dl.save({filename:fn,data:d.output('blob')});toast('PDF ready ✓');return}}catch(e){if(e&&e.code==='declined')return}
+  try{d.save(fn);toast('PDF ready ✓')}catch(e){toast('Could not save PDF')}
+}
+$('#pdf').onclick=()=>{const b=cur();if(!b.items.length)return toast('Add at least one item');pdfBills([b],'JKT_'+b.name+'_'+b.date+'.pdf')};
+$('#pdfAll').onclick=()=>pdfBills(L,'JKT_All_Bills_'+today()+'.pdf');
+$('#pdfDay').onclick=()=>pdfBills(dayList(),'JKT_Collection_'+($('#fd').value||'All')+'.pdf');
+
+/* ---------- 3D effects ---------- */
+document.addEventListener('pointerdown',e=>{const b=e.target.closest('.btn');if(!b)return;const s=document.createElement('i');s.className='rp';const r=b.getBoundingClientRect();s.style.left=e.clientX-r.left+'px';s.style.top=e.clientY-r.top+'px';b.appendChild(s);setTimeout(()=>s.remove(),600)});
+if(matchMedia('(hover:hover)').matches){
+  document.addEventListener('pointermove',e=>{const c=e.target.closest&&e.target.closest('.tilt');if(!c)return;const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;c.style.transform=`perspective(900px) rotateX(${-y*6}deg) rotateY(${x*8}deg) translateZ(6px)`});
+  document.addEventListener('pointerout',e=>{const c=e.target.closest&&e.target.closest('.tilt');if(c)c.style.transform=''});
+}
+
+/* ---------- real-time refresh across open tabs ---------- */
+function renderAll(){renderLogs();renderCol();renderP();lockUI()}
+/* ---------- server: login, API, live sync ---------- */
+let TK=localStorage.getItem('jkt_token')||'',es=null;const CID=uid();
+const setLive=on=>{if(!on)$('#live').textContent='OFFLINE – reconnecting'};
+async function api(m,u,b){
+  const r=await fetch('/api/'+u,{method:m,headers:{'Content-Type':'application/json',Authorization:'Bearer '+TK,'X-Cid':CID},body:b?JSON.stringify(b):undefined});
+  const j=await r.json().catch(()=>({}));
+  if(r.status===401){logout();throw {code:401,message:'Login required'}}
+  if(!r.ok)throw Object.assign(new Error(j.error||'Error'),{code:r.status});
+  return j;
+}
+async function load(){const s=await api('GET','state');P=s.products;L=s.logs;locked=s.locked;renderAll();sync()}
+function live(){
+  if(es)es.close();let first=true;
+  es=new EventSource('/api/stream?t='+encodeURIComponent(TK));
+  es.onopen=()=>{sync();if(!first)load().catch(()=>{});first=false};
+  es.onerror=()=>setLive(false);
+  es.onmessage=e=>{try{if(JSON.parse(e.data).c===CID)return}catch(x){}load().then(()=>toast('Updated live ⚡')).catch(()=>{})};
+}
+function logout(){TK='';try{localStorage.removeItem('jkt_token')}catch(e){}if(es)es.close();P=[];L=[];renderAll();$('#lg').classList.add('show')}
+async function boot(){
+  if(!TK)return $('#lg').classList.add('show');
+  try{
+    await load();
+    if(!P.length&&!L.length){const lp=ld('products_db',[]),ll=ld('jkt_bill_logs',[]);if(lp.length||ll.length){await api('POST','import',{products:lp,logs:ll});await load();toast('Old data moved to server ✓')}}
+    $('#lg').classList.remove('show');live();
+  }catch(e){if(e.code!==401){$('#le').textContent='Cannot reach server';$('#lg').classList.add('show')}}
+}
+$('#lgo').onclick=async()=>{
+  $('#le').textContent='';
+  try{
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:$('#li').value.trim(),password:$('#lp').value})});
+    const j=await r.json();if(!r.ok)throw new Error(j.error||'Login failed');
+    TK=j.token;try{localStorage.setItem('jkt_token',TK)}catch(e){}$('#lp').value='';boot();
+  }catch(e){$('#le').textContent=e.message==='Failed to fetch'?'Cannot reach server':e.message}
+};
+$('#lp').onkeydown=e=>{if(e.key==='Enter')$('#lgo').click()};
+$('#lo').onclick=logout;
+if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+
+$('#date').value=$('#fd').value=today();
+addRow();renderAll();boot();
+</script>
+</body>
+</html>
